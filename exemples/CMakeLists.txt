@@ -10,3 +10,6 @@ target_link_libraries(Window mlx)
 
 add_executable(put_image_to_window "put_image_to_window.c")
 target_link_libraries(put_image_to_window mlx)
+
+add_executable(pixel_format "pixel_format.c")
+target_link_libraries(pixel_format mlx)
