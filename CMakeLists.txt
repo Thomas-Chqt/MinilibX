@@ -22,10 +22,12 @@ if (NOT MLX_ENABLE_METAL AND NOT MLX_ENABLE_OPENGL)
 endif()
 
 
-project(MinilibX ${MLX_LIBRARY_TYPE} CXX)
+project(MinilibX)
+
+enable_language(CXX)
 
 
-add_library(mlx)
+add_library(mlx ${MLX_LIBRARY_TYPE})
 
 set_target_properties(mlx PROPERTIES CXX_STANDARD 11 CXX_STANDARD_REQUIRED ON)
 
