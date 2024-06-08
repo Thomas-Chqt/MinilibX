@@ -16,9 +16,9 @@ struct VertexOut
     float2 uv;
 };
 
-vertex VertexOut imageDraw_vrtx(uint vID                             [[vertex_id]],
-                                constant mlx::Vertex *vertices       [[buffer(0)]],
-                                constant metal::float3x3& u_mpMatrix [[buffer(1)]])
+vertex VertexOut imageDraw_vs(uint vID                             [[vertex_id]],
+                              constant mlx::Vertex *vertices       [[buffer(0)]],
+                              constant metal::float3x3& u_mpMatrix [[buffer(1)]])
 {
     return (VertexOut){
         .pos = float4(u_mpMatrix * float3(vertices[vID].pos, 1), 1),
@@ -26,7 +26,7 @@ vertex VertexOut imageDraw_vrtx(uint vID                             [[vertex_id
     };
 }
 
-fragment float4 imageDraw_frag(VertexOut in [[stage_in]], metal::texture2d<float> u_texture [[texture(0)]])
+fragment float4 imageDraw_fs(VertexOut in [[stage_in]], metal::texture2d<float> u_texture [[texture(0)]])
 {
     constexpr metal::sampler textureSampler(metal::mag_filter::linear, metal::min_filter::linear);
 
