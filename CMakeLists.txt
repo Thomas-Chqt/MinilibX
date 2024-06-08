@@ -7,19 +7,23 @@
 
 cmake_minimum_required(VERSION 3.23)
 
-option(BUILD_SHARED_LIBS    "Build using shared libraries"        OFF)
-option(MLX_IN_PARENT_PROJ   "Add mlx to the parent project"       ON)
-option(MLX_INCLUDE_EXEMPLES "Include mlx exemples in the project" OFF)
+option(BUILD_SHARED_LIBS  "Build using shared libraries"       OFF)
+option(MLX_BUILD_EXEMPLES "Build MinilibX exemple executables" OFF)
+option(MLX_ENABLE_OPENGL "Build with OpenGL enable" ON)
 
-
-get_directory_property(HAS_PARENT PARENT_DIRECTORY)
-if(NOT MLX_IN_PARENT_PROJ OR NOT HAS_PARENT)
-    project(MinilibX)
+if (APPLE)
+    option(MLX_ENABLE_METAL "Build with metal enable" ON)
+elseif(MLX_ENABLE_METAL)
+    message(FATAL_ERROR "Metal is only available on apple platforms")
 endif()
 
-add_subdirectory("dependencies")
+if (NOT MLX_ENABLE_METAL AND NOT MLX_ENABLE_OPENGL)
+    message(FATAL_ERROR "One graphic api must be enable")
+endif()
 
-enable_language(CXX)
+
+project(MinilibX ${MLX_LIBRARY_TYPE} CXX)
+
 
 add_library(mlx)
 
@@ -33,21 +37,39 @@ target_sources(mlx PRIVATE ${MLX_SOURCES})
 target_include_directories(mlx PRIVATE "src" PUBLIC "include")
 
 
-add_subdirectory("Shaders")
+if(MLX_ENABLE_METAL)
+    set(MTL_SHADER_SOURCE_DIR "${CMAKE_CURRENT_LIST_DIR}/Shaders")
+    set(MTL_SHADER_BUILD_DIR  "${CMAKE_CURRENT_BINARY_DIR}")
+    get_target_property(MLX_INCLUDE_DIRS mlx INCLUDE_DIRECTORIES) 
+    foreach(dir IN LISTS MLX_INCLUDE_DIRS)
+        list(APPEND MTL_SHADER_BUILD_FLAGS "-I${dir}")
+    endforeach()
+    set(MTL_SHADER_LIB "${MTL_SHADER_BUILD_DIR}/MetalShaderLibrary.metallib")
 
-if(ENABLE_METAL)
     target_compile_definitions(mlx PRIVATE "MTL_SHADER_LIB=\"${MTL_SHADER_LIB}\"")
+    target_compile_definitions(mlx PRIVATE "MLX_METAL_ENABLED")
+
+    add_custom_target(MLX_MetalShaderLibrary DEPENDS ${MTL_SHADER_LIB} SOURCES ${MTL_SHADER_LIB_SRCS})
     add_dependencies(mlx MLX_MetalShaderLibrary)
+
+    find_program(XCRUN_PATH xcrun REQUIRED)
+    file(GLOB_RECURSE MTL_SHADER_LIB_SRCS "${MTL_SHADER_SOURCE_DIR}/*.metal")    
+    foreach(src IN LISTS MTL_SHADER_LIB_SRCS)
+        string(REPLACE ".metal" ".air" air "${src}")
+        string(REPLACE ${MTL_SHADER_SOURCE_DIR} ${MTL_SHADER_BUILD_DIR} air "${air}")
+        add_custom_command(OUTPUT "${air}" COMMAND ${XCRUN_PATH} -sdk macosx metal ${MTL_SHADER_BUILD_FLAGS} -o "${air}" -c "${src}" DEPENDS "${src}")
+        list(APPEND MTL_SHADER_LIB_AIRS "${air}")
+    endforeach()
+    add_custom_command(OUTPUT ${MTL_SHADER_LIB} COMMAND ${XCRUN_PATH} -sdk macosx metallib -o ${MTL_SHADER_LIB} ${MTL_SHADER_LIB_AIRS} DEPENDS ${MTL_SHADER_LIB_AIRS})
 endif()
 
-if(ENABLE_OPENGL)
-    target_compile_definitions(mlx PRIVATE "OPENGL_SHADER_DIR=\"${OPENGL_SHADER_DIR}\"")
+if(MLX_ENABLE_OPENGL)
+    target_compile_definitions(mlx PRIVATE "OPENGL_SHADER_DIR=\"${CMAKE_CURRENT_SOURCE_DIR}/Shaders\"")
+    target_compile_definitions(mlx PRIVATE "MLX_OPENGL_ENABLED")
 endif()
 
+add_subdirectory("dependencies")
 
-target_link_libraries(mlx PRIVATE UtilsCPP Graphics)
-
-
-if(MLX_INCLUDE_EXEMPLES)
+if(MLX_BUILD_EXEMPLES)
     add_subdirectory("exemples")
 endif()
