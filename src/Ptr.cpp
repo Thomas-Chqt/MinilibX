@@ -48,9 +48,6 @@ void Ptr::startLoop()
     while (1)
     {
         m_platform->pollEvents();
-
-        for (auto& win : m_windows)
-            win->drawFrame();
         
         if (m_loopHook)
             m_loopHook();

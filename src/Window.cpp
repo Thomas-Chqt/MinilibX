@@ -10,6 +10,7 @@
 #include "Window.hpp"
 #include "Graphics/Event.hpp"
 #include "Graphics/Window.hpp"
+#include "Math/Matrix.hpp"
 #include "Ptr.hpp"
 #include "UtilsCPP/SharedPtr.hpp"
 #include "mlx_internal.hpp"
@@ -31,14 +32,6 @@ Window::Window(mlx::Ptr& mlx_ptr, int width, int height)
     
     window->setEventCallBack([this](gfx::Event& gfxEvent)
     {
-        // gfxEvent.dispatch<gfx::WindowResizeEvent>([this](gfx::WindowResizeEvent& event)
-        // {
-        //     m_projectionMatrix = math::mat3x3(
-        //         2/(float)event.width(),                           0, -1,
-        //                              0, -2.0f/(float)event.height(),  1,
-        //                              0,                           0,  1
-        //     );
-        // });
         for (int i = 0; i < 7; i++)
         {
             if (m_hooks[i])
@@ -47,11 +40,6 @@ Window::Window(mlx::Ptr& mlx_ptr, int width, int height)
     });
     
     m_graphicAPI->setRenderTarget(window);
-    for (int i = 0; i < 6; i++)
-    {
-        m_graphicAPI->beginFrame();
-        m_graphicAPI->endFrame();
-    }
 
     m_graphicPipeline = m_graphicAPI->newGraphicsPipeline("imageDraw_vs", "imageDraw_fs", gfx::GraphicPipeline::BlendingOperation::one_minus_srcA_plus_srcA);
     m_indexBuffer = m_graphicAPI->newIndexBuffer({ 0, 2, 1, 1, 2, 3 });
@@ -59,13 +47,19 @@ Window::Window(mlx::Ptr& mlx_ptr, int width, int height)
 
 void Window::putImage(mlx::Image& img, int x, int y)
 {
-    m_PutedImgs.append({
-        img.makeVertexBuffer(*m_graphicAPI),
-        img.makeTexture(*m_graphicAPI),
-        { 1, 0, (float)x,
-          0, 1, (float)y,
-          0, 0, 1}
-    });
+    m_graphicAPI->beginFrame(false);
+
+    m_graphicAPI->useGraphicsPipeline(m_graphicPipeline);
+    m_graphicAPI->useVertexBuffer(img.makeVertexBuffer(*m_graphicAPI));
+    m_graphicAPI->setVertexUniform(m_graphicPipeline->findVertexUniformIndex("u_mpMatrix"), m_projectionMatrix * math::mat3x3(
+        1, 0, (float)x,
+        0, 1, (float)y,
+        0, 0, 1
+    ));
+    m_graphicAPI->setFragmentTexture(m_graphicPipeline->findFragmentUniformIndex("u_texture"), img.makeTexture(*m_graphicAPI));
+    m_graphicAPI->drawIndexedVertices(m_indexBuffer);
+
+    m_graphicAPI->endFrame();
 }
 
 void Window::setHook(int x_event, int (*func)(), void* param)
@@ -123,24 +117,6 @@ void Window::setHook(int x_event, int (*func)(), void* param)
         };
         break;
     }
-}
-
-void Window::drawFrame()
-{
-    m_graphicAPI->beginFrame();
-
-    for (auto& img : m_PutedImgs)
-    {
-        m_graphicAPI->useGraphicsPipeline(m_graphicPipeline);
-        m_graphicAPI->useVertexBuffer(img.vertexBuffer);
-
-        m_graphicAPI->setVertexUniform(m_graphicPipeline->findVertexUniformIndex("u_mpMatrix"),    m_projectionMatrix * img.modelMatrix);
-        m_graphicAPI->setFragmentTexture(m_graphicPipeline->findFragmentUniformIndex("u_texture"), img.texture);
-
-        m_graphicAPI->drawIndexedVertices(m_indexBuffer);
-    }
-
-    m_graphicAPI->endFrame();
 }
 
 }
