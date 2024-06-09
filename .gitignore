@@ -1,3 +1,5 @@
 build/
+build.nosync/
 .cache/
 .vscode/
+.clangd
