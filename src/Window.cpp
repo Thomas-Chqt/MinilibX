@@ -126,6 +126,14 @@ void Window::setHook(int x_event, int (*func)(), void* param)
             gfxEvent.dispatch<gfx::MouseDownEvent>([&](gfx::MouseDownEvent& gfxEvent){
                 reinterpret_cast<int(*)(int, int, int, void*)>(func)(convertMouseCode(gfxEvent.mouseCode()), gfxEvent.mousePosX(), gfxEvent.mousePosY(), param);
             });
+            gfxEvent.dispatch<gfx::ScrollEvent>([&](gfx::ScrollEvent& gfxEvent){
+                int mouseCode;
+                if (gfxEvent.offsetY() > 0)
+                    mouseCode = 5;
+                else
+                    mouseCode = 4;
+                reinterpret_cast<int(*)(int, int, int, void*)>(func)(mouseCode, gfxEvent.mousePosX(), gfxEvent.mousePosY(), param);
+            });
         };
         break;
 
