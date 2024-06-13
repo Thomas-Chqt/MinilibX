@@ -17,5 +17,5 @@ out vec4 fragmentColor;
         
 void main()
 {
-    fragmentColor = texture(u_texture, vec2(texCoord.x, 1 - texCoord.y));
+    fragmentColor = texture(u_texture, texCoord);
 }

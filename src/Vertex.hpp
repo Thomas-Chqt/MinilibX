@@ -19,18 +19,3 @@ struct Vertex
 };
 
 }
-
-#ifndef __METAL_VERSION__
-
-#include "Graphics/VertexBuffer.hpp"
-
-template<>
-inline utils::Array<gfx::VertexBuffer::LayoutElement> gfx::VertexBuffer::getLayout<mlx::Vertex>()
-{
-    return {
-        { 2, Type::FLOAT, false, sizeof(mlx::Vertex), (void*)0 },
-        { 2, Type::FLOAT, false, sizeof(mlx::Vertex), (void*)offsetof(mlx::Vertex, uv) },
-    };
-}
-
-#endif // __METAL_VERSION__

@@ -13,6 +13,15 @@
 #include "mlx_internal.hpp"
 #include "Vertex.hpp"
 
+template<>
+utils::Array<gfx::VertexBuffer::LayoutElement> gfx::VertexBuffer::getLayout<mlx::Vertex>()
+{
+    return {
+        { 2, Type::FLOAT, false, sizeof(mlx::Vertex), (void*)0 },
+        { 2, Type::FLOAT, false, sizeof(mlx::Vertex), (void*)offsetof(mlx::Vertex, uv) },
+    };
+}
+
 namespace mlx
 {
 

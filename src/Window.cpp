@@ -36,7 +36,7 @@ Window::Window(mlx::Ptr& mlx_ptr, int width, int height)
     });
     
     m_graphicAPI = mlx_ptr.platform().newDefaultGraphicAPI(window);
-    #ifdef MLX_METAL_ENABLED
+    #ifdef MLX_USING_METAL
         m_graphicAPI->initMetalShaderLib(MTL_SHADER_LIB);
     #endif
 
@@ -58,7 +58,7 @@ Window::Window(mlx::Ptr& mlx_ptr, int width, int height)
 
     gfxPipeDesc.metalVSFunction = "imageDraw_vs";
     gfxPipeDesc.metalFSFunction = "imageDraw_fs";
-    #ifdef MLX_OPENGL_ENABLED
+    #ifdef MLX_USING_OPENGL
         gfxPipeDesc.openglVSCode = utils::String::contentOfFile(OPENGL_SHADER_DIR"/imageDraw.vs");
         gfxPipeDesc.openglFSCode = utils::String::contentOfFile(OPENGL_SHADER_DIR"/imageDraw.fs");
     #endif
@@ -69,12 +69,21 @@ Window::Window(mlx::Ptr& mlx_ptr, int width, int height)
     gfxPipeDesc.blendOperation = gfx::BlendOperation::blendingOff;
     m_graphicPipelineNoBlending = m_graphicAPI->newGraphicsPipeline(gfxPipeDesc);
 
-    m_vertexBuffer = m_graphicAPI->newVertexBuffer(utils::Array<Vertex>({
-        {{-1,  1}, {0, 0}},
-        {{-1, -1}, {0, 1}},
-        {{ 1,  1}, {1, 0}},
-        {{ 1, -1}, {1, 1}},
-    }));
+    #if defined (MLX_USING_OPENGL)
+        m_vertexBuffer = m_graphicAPI->newVertexBuffer(utils::Array<Vertex>({
+            {{-1,  1}, {0, 1}},
+            {{-1, -1}, {0, 0}},
+            {{ 1,  1}, {1, 1}},
+            {{ 1, -1}, {1, 0}},
+        }));
+    #else
+        m_vertexBuffer = m_graphicAPI->newVertexBuffer(utils::Array<Vertex>({
+            {{-1,  1}, {0, 0}},
+            {{-1, -1}, {0, 1}},
+            {{ 1,  1}, {1, 0}},
+            {{ 1, -1}, {1, 1}},
+        }));
+    #endif
 
     m_indexBuffer = m_graphicAPI->newIndexBuffer({0, 2, 1, 1, 2, 3});
 }
