@@ -1,6 +1,8 @@
 build/
+build.nosync/
 .cache/
 .vscode/
 .DS_Store
-build_xcode
+build_xcode/
+build_xcode.nosync/
 imgui.ini
