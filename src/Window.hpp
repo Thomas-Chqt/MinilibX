@@ -49,8 +49,13 @@ private:
 
     utils::Func<void(gfx::Event&)> m_hooks[7] = {};
 
-    utils::SharedPtr<gfx::FrameBuffer> m_frameBuffer;
     utils::Array<PutedTexture> m_putedTextures;
+
+    utils::SharedPtr<gfx::FrameBuffer> m_frameBuffer;
+    utils::SharedPtr<gfx::GraphicPipeline> m_graphicPipeline;
+    utils::SharedPtr<gfx::GraphicPipeline> m_graphicPipelineNoBlending;
+    utils::SharedPtr<gfx::VertexBuffer> m_vertexBuffer;
+    utils::SharedPtr<gfx::IndexBuffer> m_indexBuffer;
 };
 
 }

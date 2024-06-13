@@ -10,10 +10,8 @@
 #include "Window.hpp"
 #include "Graphics/Enums.hpp"
 #include "Graphics/Event.hpp"
-#include "Graphics/FrameBuffer.hpp"
 #include "Graphics/GraphicPipeline.hpp"
-#include "Graphics/IndexBuffer.hpp"
-#include "Graphics/VertexBuffer.hpp"
+#include "Graphics/Texture.hpp"
 #include "Graphics/Window.hpp"
 #include "Math/Matrix.hpp"
 #include "Ptr.hpp"
@@ -48,11 +46,37 @@ Window::Window(mlx::Ptr& mlx_ptr, int width, int height)
                      0,                   0,  1
     );
 
-    gfx::FrameBuffer::Descriptor fBuffDesc;
-    fBuffDesc.width = width;
-    fBuffDesc.height = height;
-    fBuffDesc.pixelFormat = gfx::PixelFormat::ARGB;
-    m_frameBuffer = m_graphicAPI->newFrameBuffer(fBuffDesc);
+    gfx::Texture::Descriptor colorTextureDescriptor;
+    colorTextureDescriptor.width = width;
+    colorTextureDescriptor.height = height;
+    colorTextureDescriptor.pixelFormat = gfx::PixelFormat::BGRA;
+    m_frameBuffer = m_graphicAPI->newFrameBuffer(
+        m_graphicAPI->newTexture(colorTextureDescriptor)
+    );
+
+    gfx::GraphicPipeline::Descriptor gfxPipeDesc;
+
+    gfxPipeDesc.metalVSFunction = "imageDraw_vs";
+    gfxPipeDesc.metalFSFunction = "imageDraw_fs";
+    #ifdef MLX_OPENGL_ENABLED
+        gfxPipeDesc.openglVSCode = utils::String::contentOfFile(OPENGL_SHADER_DIR"/imageDraw.vs");
+        gfxPipeDesc.openglFSCode = utils::String::contentOfFile(OPENGL_SHADER_DIR"/imageDraw.fs");
+    #endif
+    gfxPipeDesc.pixelFormat = gfx::PixelFormat::BGRA;
+    gfxPipeDesc.blendOperation = gfx::BlendOperation::one_minus_srcA_plus_srcA;
+    m_graphicPipeline = m_graphicAPI->newGraphicsPipeline(gfxPipeDesc);
+
+    gfxPipeDesc.blendOperation = gfx::BlendOperation::blendingOff;
+    m_graphicPipelineNoBlending = m_graphicAPI->newGraphicsPipeline(gfxPipeDesc);
+
+    m_vertexBuffer = m_graphicAPI->newVertexBuffer(utils::Array<Vertex>({
+        {{-1,  1}, {0, 0}},
+        {{-1, -1}, {0, 1}},
+        {{ 1,  1}, {1, 0}},
+        {{ 1, -1}, {1, 1}},
+    }));
+
+    m_indexBuffer = m_graphicAPI->newIndexBuffer({0, 2, 1, 1, 2, 3});
 }
 
 void Window::putImage(mlx::Image& img, int x, int y)
@@ -127,54 +151,36 @@ void Window::setHook(int x_event, int (*func)(), void* param)
 
 void Window::drawFrame()
 {
-    gfx::GraphicPipeline::Descriptor gfxPipeDesc;
-
-    gfxPipeDesc.metalVSFunction = "imageDraw_vs";
-    gfxPipeDesc.metalFSFunction = "imageDraw_fs";
-    gfxPipeDesc.openglVSCode = utils::String::contentOfFile(OPENGL_SHADER_DIR"/imageDraw.vs");
-    gfxPipeDesc.openglFSCode = utils::String::contentOfFile(OPENGL_SHADER_DIR"/imageDraw.fs");
-
-    gfxPipeDesc.pixelFormat = gfx::PixelFormat::ARGB;
-    gfxPipeDesc.blendOperation = gfx::BlendOperation::one_minus_srcA_plus_srcA;
-    utils::SharedPtr<gfx::GraphicPipeline> offscreenPipeline = m_graphicAPI->newGraphicsPipeline(gfxPipeDesc);
-
-    gfxPipeDesc.pixelFormat = gfx::PixelFormat::RGBA;
-    gfxPipeDesc.blendOperation = gfx::BlendOperation::srcA_plus_1_minus_srcA;
-    utils::SharedPtr<gfx::GraphicPipeline> onscreenPipeline = m_graphicAPI->newGraphicsPipeline(gfxPipeDesc);
-
-    utils::SharedPtr<gfx::VertexBuffer> onscreenVertexBuffer = m_graphicAPI->newVertexBuffer(utils::Array<Vertex>({
-        {{-1,  1}, {0, 0}},
-        {{-1, -1}, {0, 1}},
-        {{ 1,  1}, {1, 0}},
-        {{ 1, -1}, {1, 1}},
-    }));
-
-    utils::SharedPtr<gfx::IndexBuffer> indexBuffer = m_graphicAPI->newIndexBuffer({0, 2, 1, 1, 2, 3});
-
-    m_graphicAPI->setLoadAction(gfx::LoadAction::load);
-    m_graphicAPI->setRenderTarget(m_frameBuffer);
     m_graphicAPI->beginFrame();
 
-    m_graphicAPI->useGraphicsPipeline(offscreenPipeline);
+    static bool shouldClearFrameBuff = true;
+    m_graphicAPI->setLoadAction(shouldClearFrameBuff ? gfx::LoadAction::clear : gfx::LoadAction::load);
+    shouldClearFrameBuff = false;
+    
+    m_graphicAPI->beginOffScreenRenderPass(m_frameBuffer);
+
+    m_graphicAPI->useGraphicsPipeline(m_graphicPipeline);
     for (auto& tex : m_putedTextures)
     {
         m_graphicAPI->useVertexBuffer(tex.vtxBuffer);
-        m_graphicAPI->setVertexUniform(offscreenPipeline->findVertexUniformIndex("u_mpMatrix"), m_projectionMatrix * tex.modelMatrix);
-        m_graphicAPI->setFragmentTexture(offscreenPipeline->findFragmentUniformIndex("u_texture"), tex.texture);
-        m_graphicAPI->drawIndexedVertices(indexBuffer);
+        m_graphicAPI->setVertexUniform(m_graphicPipeline->findVertexUniformIndex("u_mpMatrix"), m_projectionMatrix * tex.modelMatrix);
+        m_graphicAPI->setFragmentTexture(m_graphicPipeline->findFragmentUniformIndex("u_texture"), tex.texture);
+        m_graphicAPI->drawIndexedVertices(m_indexBuffer);
     }
     m_putedTextures.clear();
 
+    m_graphicAPI->endOffScreeRenderPass();
+
     m_graphicAPI->setLoadAction(gfx::LoadAction::clear);
-    m_graphicAPI->setRenderTarget(m_graphicAPI->screenFrameBuffer());
-    m_graphicAPI->nextRenderPass();
+    m_graphicAPI->beginOnScreenRenderPass();
 
-    m_graphicAPI->useGraphicsPipeline(onscreenPipeline);
-    m_graphicAPI->useVertexBuffer(onscreenVertexBuffer);
-    m_graphicAPI->setVertexUniform(onscreenPipeline->findVertexUniformIndex("u_mpMatrix"), math::mat3x3(1));
-    m_graphicAPI->setFragmentTexture(onscreenPipeline->findFragmentUniformIndex("u_texture"), m_frameBuffer);
-    m_graphicAPI->drawIndexedVertices(indexBuffer);
+    m_graphicAPI->useGraphicsPipeline(m_graphicPipelineNoBlending);
+    m_graphicAPI->useVertexBuffer(m_vertexBuffer);
+    m_graphicAPI->setVertexUniform(m_graphicPipelineNoBlending->findVertexUniformIndex("u_mpMatrix"), math::mat3x3(1));
+    m_graphicAPI->setFragmentTexture(m_graphicPipelineNoBlending->findFragmentUniformIndex("u_texture"), m_frameBuffer->colorTexture());
+    m_graphicAPI->drawIndexedVertices(m_indexBuffer);
 
+    m_graphicAPI->endOnScreenRenderPass();
     m_graphicAPI->endFrame();
 }
 

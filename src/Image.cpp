@@ -34,7 +34,7 @@ utils::SharedPtr<gfx::Texture> Image::makeTexture(gfx::GraphicAPI& gfxApi)
     gfx::Texture::Descriptor textureDescriptor;
     textureDescriptor.width = m_width;
     textureDescriptor.height = m_height;
-    textureDescriptor.pixelFormat = gfx::PixelFormat::ARGB;
+    textureDescriptor.pixelFormat = gfx::PixelFormat::BGRA;
     utils::SharedPtr<gfx::Texture> newTexture = gfxApi.newTexture(textureDescriptor);
     newTexture->setBytes(m_buffer);
 
