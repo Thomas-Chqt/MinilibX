@@ -9,23 +9,25 @@ cmake_minimum_required(VERSION 3.23)
 
 option(BUILD_SHARED_LIBS  "Build using shared libraries"       OFF)
 option(MLX_BUILD_EXEMPLES "Build MinilibX exemple executables" OFF)
-option(MLX_ENABLE_OPENGL "Build with OpenGL enable" ON)
 
 if (APPLE)
-    option(MLX_ENABLE_METAL "Build with metal enable" ON)
-elseif(MLX_ENABLE_METAL)
-    message(FATAL_ERROR "Metal is only available on apple platforms")
+    option(MLX_FORCE_OPENGL "Use opengl" OFF)
 endif()
 
-if (NOT MLX_ENABLE_METAL AND NOT MLX_ENABLE_OPENGL)
-    message(FATAL_ERROR "One graphic api must be enable")
+if(NOT APPLE OR MLX_FORCE_OPENGL)
+    set(MLX_USING_OPENGL ON)
+else()
+    set(MLX_USING_METAL ON)
 endif()
 
 
-project(MinilibX ${MLX_LIBRARY_TYPE} CXX)
+
+project(MinilibX)
+
+enable_language(CXX)
 
 
-add_library(mlx)
+add_library(mlx ${MLX_LIBRARY_TYPE})
 
 set_target_properties(mlx PROPERTIES CXX_STANDARD 11 CXX_STANDARD_REQUIRED ON)
 
@@ -37,7 +39,7 @@ target_sources(mlx PRIVATE ${MLX_SOURCES})
 target_include_directories(mlx PRIVATE "src" PUBLIC "include")
 
 
-if(MLX_ENABLE_METAL)
+if(MLX_USING_METAL)
     set(MTL_SHADER_SOURCE_DIR "${CMAKE_CURRENT_LIST_DIR}/Shaders")
     set(MTL_SHADER_BUILD_DIR  "${CMAKE_CURRENT_BINARY_DIR}")
     get_target_property(MLX_INCLUDE_DIRS mlx INCLUDE_DIRECTORIES) 
@@ -47,7 +49,7 @@ if(MLX_ENABLE_METAL)
     set(MTL_SHADER_LIB "${MTL_SHADER_BUILD_DIR}/MetalShaderLibrary.metallib")
 
     target_compile_definitions(mlx PRIVATE "MTL_SHADER_LIB=\"${MTL_SHADER_LIB}\"")
-    target_compile_definitions(mlx PRIVATE "MLX_METAL_ENABLED")
+    target_compile_definitions(mlx PRIVATE "MLX_USING_METAL")
 
     add_custom_target(MLX_MetalShaderLibrary DEPENDS ${MTL_SHADER_LIB} SOURCES ${MTL_SHADER_LIB_SRCS})
     add_dependencies(mlx MLX_MetalShaderLibrary)
@@ -61,11 +63,9 @@ if(MLX_ENABLE_METAL)
         list(APPEND MTL_SHADER_LIB_AIRS "${air}")
     endforeach()
     add_custom_command(OUTPUT ${MTL_SHADER_LIB} COMMAND ${XCRUN_PATH} -sdk macosx metallib -o ${MTL_SHADER_LIB} ${MTL_SHADER_LIB_AIRS} DEPENDS ${MTL_SHADER_LIB_AIRS})
-endif()
-
-if(MLX_ENABLE_OPENGL)
+elseif(MLX_USING_OPENGL)
     target_compile_definitions(mlx PRIVATE "OPENGL_SHADER_DIR=\"${CMAKE_CURRENT_SOURCE_DIR}/Shaders\"")
-    target_compile_definitions(mlx PRIVATE "MLX_OPENGL_ENABLED")
+    target_compile_definitions(mlx PRIVATE "MLX_USING_OPENGL")
 endif()
 
 add_subdirectory("dependencies")

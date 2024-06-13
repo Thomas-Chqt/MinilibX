@@ -18,3 +18,7 @@ target_link_libraries(put_image_to_window mlx)
 add_executable(pixel_format "pixel_format.c")
 set_target_properties(pixel_format PROPERTIES FOLDER "exemples")
 target_link_libraries(pixel_format mlx)
+
+add_executable(put_image_full_window "put_image_full_window.c")
+set_target_properties(put_image_full_window PROPERTIES FOLDER "exemples")
+target_link_libraries(put_image_full_window mlx)

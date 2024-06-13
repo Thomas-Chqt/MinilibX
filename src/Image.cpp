@@ -8,8 +8,19 @@
  */
 
 #include "Image.hpp"
+#include "Graphics/Enums.hpp"
+#include "Graphics/Texture.hpp"
 #include "mlx_internal.hpp"
 #include "Vertex.hpp"
+
+template<>
+utils::Array<gfx::VertexBuffer::LayoutElement> gfx::VertexBuffer::getLayout<mlx::Vertex>()
+{
+    return {
+        { 2, Type::FLOAT, false, sizeof(mlx::Vertex), (void*)0 },
+        { 2, Type::FLOAT, false, sizeof(mlx::Vertex), (void*)offsetof(mlx::Vertex, uv) },
+    };
+}
 
 namespace mlx
 {
@@ -29,7 +40,11 @@ char* Image::getDataAddr(int *bits_per_pixel, int *size_line, int *endian)
 
 utils::SharedPtr<gfx::Texture> Image::makeTexture(gfx::GraphicAPI& gfxApi)
 {
-    utils::SharedPtr<gfx::Texture> newTexture = gfxApi.newTexture(m_width, m_height, gfx::Texture::PixelFormat::ARGB);
+    gfx::Texture::Descriptor textureDescriptor;
+    textureDescriptor.width = m_width;
+    textureDescriptor.height = m_height;
+    textureDescriptor.pixelFormat = gfx::PixelFormat::BGRA;
+    utils::SharedPtr<gfx::Texture> newTexture = gfxApi.newTexture(textureDescriptor);
     newTexture->setBytes(m_buffer);
 
     return newTexture;

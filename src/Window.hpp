@@ -11,8 +11,10 @@
 # define MLX_WINDOW_HPP
 
 #include "Graphics/Event.hpp"
+#include "Graphics/FrameBuffer.hpp"
 #include "Graphics/GraphicAPI.hpp"
-#include "Graphics/IndexBuffer.hpp"
+#include "Graphics/Texture.hpp"
+#include "Graphics/VertexBuffer.hpp"
 #include "Image.hpp"
 #include "Math/Matrix.hpp"
 #include "UtilsCPP/Array.hpp"
@@ -27,10 +29,10 @@ class Ptr;
 class Window
 {
 private:
-    struct PutedImg
+    struct PutedTexture
     {
-        utils::SharedPtr<gfx::VertexBuffer> vertexBuffer;
         utils::SharedPtr<gfx::Texture> texture;
+        utils::SharedPtr<gfx::VertexBuffer> vtxBuffer;
         math::mat3x3 modelMatrix;
     };
 public:
@@ -44,10 +46,16 @@ public:
 private:
     utils::SharedPtr<gfx::GraphicAPI> m_graphicAPI;
     math::mat3x3 m_projectionMatrix;
+
     utils::Func<void(gfx::Event&)> m_hooks[7] = {};
+
+    utils::Array<PutedTexture> m_putedTextures;
+
+    utils::SharedPtr<gfx::FrameBuffer> m_frameBuffer;
     utils::SharedPtr<gfx::GraphicPipeline> m_graphicPipeline;
+    utils::SharedPtr<gfx::GraphicPipeline> m_graphicPipelineNoBlending;
+    utils::SharedPtr<gfx::VertexBuffer> m_vertexBuffer;
     utils::SharedPtr<gfx::IndexBuffer> m_indexBuffer;
-    utils::Array<PutedImg> m_PutedImgs;
 };
 
 }
