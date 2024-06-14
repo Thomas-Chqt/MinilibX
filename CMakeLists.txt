@@ -5,7 +5,7 @@
 # Date: 2024/05/25 12:32:32
 # ---------------------------------------------------
 
-cmake_minimum_required(VERSION 3.23)
+cmake_minimum_required(VERSION 3.16)
 
 option(BUILD_SHARED_LIBS  "Build using shared libraries"       OFF)
 option(MLX_BUILD_EXEMPLES "Build MinilibX exemple executables" OFF)
