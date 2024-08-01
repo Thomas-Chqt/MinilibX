@@ -33,6 +33,14 @@ int mlx_hook(void* win_ptr, int x_event, int x_mask, int (*func)(), void* param)
 int mlx_loop_hook(void* mlx_ptr, int (*func)(), void* param);
 int mlx_loop(void* mlx_ptr);
 
+int mlx_mouse_hide();
+int mlx_mouse_show();
+int mlx_mouse_move(void *win_ptr, int x, int y);
+int mlx_mouse_get_pos(void *win_ptr, int *x, int *y);
+
+void* mlx_xpm_file_to_image(void *mlx_ptr, char *filename, int *width, int *height);
+void* mlx_png_file_to_image(void *mlx_ptr, char *file, int *width, int *height);
+
 #ifdef __cplusplus
 }
 }

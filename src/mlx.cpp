@@ -11,6 +11,8 @@
 #include "Image.hpp"
 #include "Ptr.hpp"
 #include "Window.hpp"
+#define STB_IMAGE_IMPLEMENTATION
+#include "stb_image.h"
 
 namespace mlx
 {
@@ -118,6 +120,63 @@ int mlx_loop(void* mlx_ptr)
         return 0;
     }
     catch(...) { return 1; }
+}
+
+int mlx_mouse_hide()
+{
+    Ptr::mouseHide();
+    return 0;
+}
+
+int mlx_mouse_show()
+{
+    Ptr::mouseShow();
+    return 0;
+}
+
+int mlx_mouse_move(void *win_ptr, int x, int y)
+{
+    try
+    {
+        mlx::Window& mlxWindow = *static_cast<mlx::Window*>(win_ptr);
+        mlxWindow.mouse_move(x, y);
+        return 0;
+    } 
+    catch (...) { return 1; }
+}
+
+int mlx_mouse_get_pos(void *win_ptr, int *x, int *y)
+{
+    try
+    {
+        mlx::Window& mlxWindow = *static_cast<mlx::Window*>(win_ptr);
+        mlxWindow.mouse_get_pos(x, y);
+        return 0;
+    } 
+    catch (...) { return 1; }
+}
+
+void* mlx_xpm_file_to_image(void *mlx_ptr, char *filename, int *width, int *height)
+{
+    try
+    {
+        (void)mlx_ptr;
+        *width = 100;
+        *height = 100;
+        stbi_uc* imgBytes = stbi_load(filename, width, height, nullptr, STBI_rgb_alpha);
+        if (imgBytes == nullptr)
+            return nullptr;
+        mlx::Image* mlxImg = new mlx::Image(*width, *height);
+        mlxImg->setContent(imgBytes);
+        stbi_image_free(imgBytes);
+        return mlxImg;
+    }
+    catch (...) { return nullptr; }
+}
+
+void* mlx_png_file_to_image(void *mlx_ptr, char *file, int *width, int *height)
+{
+    return mlx_xpm_file_to_image(mlx_ptr, file, width, height);
 }
 
 }

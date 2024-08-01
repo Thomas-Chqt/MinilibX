@@ -10,8 +10,10 @@
 #include "Image.hpp"
 #include "Graphics/Enums.hpp"
 #include "Graphics/Texture.hpp"
+#include "UtilsCPP/Types.hpp"
 #include "mlx_internal.hpp"
 #include "Vertex.hpp"
+#include <cstring>
 
 template<>
 utils::Array<gfx::VertexBuffer::LayoutElement> gfx::VertexBuffer::getLayout<mlx::Vertex>()
@@ -58,6 +60,18 @@ utils::SharedPtr<gfx::VertexBuffer> Image::makeVertexBuffer(gfx::GraphicAPI& gfx
         { { (float)m_width,               0 }, { 1, 0 } },
         { { (float)m_width, (float)m_height }, { 1, 1 } }
     });
+}
+
+void Image::setContent(void* data)
+{
+    for (utils::uint32 i = 0; i < m_width * m_height * BYTES_PER_PIXEL; i += 4)
+    {
+        //RGBA -> BGRA
+        ((utils::byte*)m_buffer)[i + 0] =  ((utils::byte*)data)[i + 2];
+        ((utils::byte*)m_buffer)[i + 1] =  ((utils::byte*)data)[i + 1];
+        ((utils::byte*)m_buffer)[i + 2] =  ((utils::byte*)data)[i + 0];
+        ((utils::byte*)m_buffer)[i + 3] =  255 - ((utils::byte*)data)[i + 3];
+    }
 }
 
 Image::~Image()

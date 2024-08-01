@@ -12,7 +12,6 @@
 #include "Graphics/Event.hpp"
 #include "Graphics/GraphicPipeline.hpp"
 #include "Graphics/Texture.hpp"
-#include "Graphics/Window.hpp"
 #include "Math/Matrix.hpp"
 #include "Ptr.hpp"
 #include "UtilsCPP/Array.hpp"
@@ -25,17 +24,21 @@ namespace mlx
 
 Window::Window(mlx::Ptr& mlx_ptr, int width, int height)
 {
-    utils::SharedPtr<gfx::Window> window = mlx_ptr.platform().newDefaultWindow(width, height);
-    window->setEventCallBack([this](gfx::Event& gfxEvent)
+    m_window = mlx_ptr.platform().newDefaultWindow(width, height);
+    m_window->setEventCallBack([this](gfx::Event& gfxEvent)
     {
         for (int i = 0; i < 7; i++)
         {
             if (m_hooks[i])
                 m_hooks[i](gfxEvent);
         }
+        gfxEvent.dispatch<gfx::MouseMoveEvent>([&](gfx::MouseMoveEvent& event){
+            mousePosX = event.mousePosX();
+            mousePosY = event.mousePosY();
+        });
     });
     
-    m_graphicAPI = mlx_ptr.platform().newDefaultGraphicAPI(window);
+    m_graphicAPI = mlx_ptr.platform().newDefaultGraphicAPI(m_window);
     #ifdef MLX_USING_METAL
         m_graphicAPI->initMetalShaderLib(MTL_SHADER_LIB);
     #endif
@@ -199,6 +202,19 @@ void Window::drawFrame()
 
     m_graphicAPI->endOnScreenRenderPass();
     m_graphicAPI->endFrame();
+}
+
+void Window::mouse_move(int x, int y)
+{
+    m_window->setCursorPos(x, y);
+    mousePosX = x;
+    mousePosY = y;
+}
+
+void Window::mouse_get_pos(int *x, int *y)
+{
+    *x = mousePosX;
+    *y = mousePosY;
 }
 
 }

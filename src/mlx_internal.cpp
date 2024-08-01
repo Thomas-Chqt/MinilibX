@@ -28,7 +28,14 @@ int convertKeyCode(int code)
         case  9: return 126;
         case  8: return 125;
         case 82: return 15;
-        default: return code;
+        case 87: return 13;
+        case 65: return 0;
+        case 83: return 1;
+        case 68: return 2;
+        case 70: return 3;
+        case 86: return 259;
+        default:
+            return code;
     }
 }
 int convertMouseCode(int code)
