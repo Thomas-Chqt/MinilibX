@@ -13,6 +13,8 @@
 namespace mlx
 {
 
+utils::Array<utils::UniquePtr<mlx::Window>> Ptr::s_windows;
+
 Ptr::Ptr()
 {
     gfx::Platform::init();
@@ -26,11 +28,25 @@ void Ptr::startLoop()
     {
         m_platform->pollEvents();
 
-        for (auto& win : m_windows)
+        for (auto& win : s_windows)
             win->drawFrame();
         
         if (m_loopHook)
             m_loopHook();
+    }
+}
+
+void Ptr::mouseHide()
+{
+    for (auto& win : s_windows) {
+        win->mouseHide();
+    }
+}
+
+void Ptr::mouseShow()
+{
+    for (auto& win : s_windows) {
+        win->mouseShow();
     }
 }
 

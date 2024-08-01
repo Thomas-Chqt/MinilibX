@@ -25,6 +25,7 @@ public:
     char* getDataAddr(int *bits_per_pixel, int *size_line, int *endian);
     utils::SharedPtr<gfx::Texture> makeTexture(gfx::GraphicAPI& gfxApi);
     utils::SharedPtr<gfx::VertexBuffer> makeVertexBuffer(gfx::GraphicAPI& gfxApi);
+    void setContent(void* data);
 
     ~Image();
 

@@ -20,6 +20,7 @@
 #include "UtilsCPP/Array.hpp"
 #include "UtilsCPP/Func.hpp"
 #include "UtilsCPP/SharedPtr.hpp"
+#include "Graphics/Window.hpp"
 
 namespace mlx
 {
@@ -41,9 +42,16 @@ public:
     void putImage(mlx::Image& img, int x, int y);
     void setHook(int x_event, int (*func)(), void* param);
 
+    void mouse_move(int x, int y);
+    void mouse_get_pos(int *x, int *y);
+
     void drawFrame();
 
+    void mouseHide() { m_window->setCursorVisibility(false); }
+    void mouseShow() { m_window->setCursorVisibility(true); }
+
 private:
+    utils::SharedPtr<gfx::Window> m_window;
     utils::SharedPtr<gfx::GraphicAPI> m_graphicAPI;
     math::mat3x3 m_projectionMatrix;
 
@@ -56,6 +64,9 @@ private:
     utils::SharedPtr<gfx::GraphicPipeline> m_graphicPipelineNoBlending;
     utils::SharedPtr<gfx::VertexBuffer> m_vertexBuffer;
     utils::SharedPtr<gfx::IndexBuffer> m_indexBuffer;
+
+    int mousePosX;
+    int mousePosY;
 };
 
 }
