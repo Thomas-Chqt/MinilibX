@@ -8,7 +8,7 @@
 cmake_minimum_required(VERSION 3.16)
 
 option(BUILD_SHARED_LIBS  "Build using shared libraries"       OFF)
-option(MLX_BUILD_EXEMPLES "Build MinilibX exemple executables" OFF)
+option(MLX_BUILD_EXAMPLES "Build MinilibX example executables" OFF)
 
 if (APPLE)
     option(MLX_FORCE_OPENGL "Use opengl" OFF)
@@ -70,6 +70,6 @@ endif()
 
 add_subdirectory("dependencies")
 
-if(MLX_BUILD_EXEMPLES)
-    add_subdirectory("exemples")
+if(MLX_BUILD_EXAMPLES)
+    add_subdirectory("examples")
 endif()
